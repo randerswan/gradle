@@ -50,7 +50,14 @@ public interface BuildOperationWorkerRegistry {
     interface Completion {
         /**
          * Marks the completion of a build operation, releasing the lease.
+         *
+         * @throws IllegalStateException when this operation has incomplete child operations
          */
         void operationFinish();
+
+        /**
+         * Waits for all child operations to complete before marking this operation as complete.
+         */
+        void waitAndFinish();
     }
 }

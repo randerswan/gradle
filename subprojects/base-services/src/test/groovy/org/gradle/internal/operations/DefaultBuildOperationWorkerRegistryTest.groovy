@@ -17,8 +17,13 @@
 package org.gradle.internal.operations
 
 import org.gradle.test.fixtures.concurrent.ConcurrentSpec
+import spock.lang.Unroll
 
 class DefaultBuildOperationWorkerRegistryTest extends ConcurrentSpec {
+
+    public static final String CONCURRENT = "CONCURRENT"
+    public static final String IN_SEQUENCE = "IN_SEQUENCE"
+
     def "operation starts immediately when there are sufficient leases available"() {
         def registry = new DefaultBuildOperationWorkerRegistry(2)
 
@@ -243,6 +248,89 @@ class DefaultBuildOperationWorkerRegistryTest extends ConcurrentSpec {
             outer.operationFinish()
         } finally {
             inner.operationFinish()
+        }
+
+        then:
+        IllegalStateException e = thrown()
+        e.message == 'Some child operations have not yet completed.'
+
+        cleanup:
+        registry?.stop()
+    }
+
+    @Unroll
+    def "parent operation can wait on child operations to complete (order: #order)"() {
+        def maxWorkers = order == IN_SEQUENCE ? 1 : 2
+        def registry = new DefaultBuildOperationWorkerRegistry(maxWorkers)
+
+        expect:
+        async {
+            start {
+                def cl = registry.operationStart()
+                def op = registry.current
+                start {
+                    def child = op.operationStart()
+                    instant.child1Started
+                    child.operationFinish()
+                }
+                start {
+                    def child = op.operationStart()
+                    instant.child2Started
+                    child.operationFinish()
+                }
+                thread.blockUntil.child1Started
+                thread.blockUntil.child2Started
+                cl.waitAndFinish()
+            }
+        }
+
+        cleanup:
+        registry?.stop()
+
+        where:
+        order << [CONCURRENT, IN_SEQUENCE]
+    }
+
+    def "parent operation can wait and complete when no child operations are created"() {
+        def registry = new DefaultBuildOperationWorkerRegistry(1)
+
+        expect:
+        async {
+            start {
+                def cl = registry.operationStart()
+                def op = registry.current
+                cl.waitAndFinish()
+            }
+        }
+
+        cleanup:
+        registry?.stop()
+    }
+
+    def "fails when a child operation is started after parent starts waiting"() {
+        def registry = new DefaultBuildOperationWorkerRegistry(1)
+
+        when:
+        async {
+            start {
+                def cl = registry.operationStart()
+                def op = registry.current
+                start {
+                    def child = op.operationStart()
+                    instant.child1Started
+                    child.operationFinish()
+                    instant.child1Finished
+                }
+                start {
+                    thread.blockUntil.child1Started
+                    def child = op.operationStart()
+                    instant.child2started
+                    sleep(100)
+                    child.operationFinish()
+                }
+                thread.blockUntil.child1Started
+                cl.waitAndFinish()
+            }
         }
 
         then:

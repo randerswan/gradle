@@ -18,6 +18,7 @@ package org.gradle.api.tasks.scala;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.process.internal.daemon.WorkerDaemonFactory;
 import org.gradle.process.internal.daemon.WorkerDaemonManager;
 import org.gradle.api.internal.tasks.scala.ScalaCompileSpec;
@@ -86,9 +87,10 @@ public class ScalaCompile extends AbstractScalaCompile {
         if (compiler == null) {
             ProjectInternal projectInternal = (ProjectInternal) getProject();
             WorkerDaemonFactory compilerDaemonFactory = getServices().get(WorkerDaemonManager.class);
+            BuildOperationWorkerRegistry buildOperationWorkerRegistry = getServices().get(BuildOperationWorkerRegistry.class);
             ScalaCompilerFactory scalaCompilerFactory = new ScalaCompilerFactory(
                 projectInternal.getRootProject().getProjectDir(), compilerDaemonFactory, getScalaClasspath(),
-                getZincClasspath(), getProject().getGradle().getGradleUserHomeDir());
+                getZincClasspath(), getProject().getGradle().getGradleUserHomeDir(), buildOperationWorkerRegistry);
             compiler = scalaCompilerFactory.newCompiler(spec);
         }
         return compiler;

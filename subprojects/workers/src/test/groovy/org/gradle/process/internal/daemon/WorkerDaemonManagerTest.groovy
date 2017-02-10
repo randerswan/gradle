@@ -16,8 +16,9 @@
 
 package org.gradle.process.internal.daemon
 
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Operation
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Completion
 import org.gradle.process.internal.health.memory.MemoryManager
-import org.gradle.process.internal.health.memory.OsMemoryStatus
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -26,7 +27,6 @@ class WorkerDaemonManagerTest extends Specification {
     def clientsManager = Mock(WorkerDaemonClientsManager)
     def client = Mock(WorkerDaemonClient)
     def memoryManager = Mock(MemoryManager)
-    def osMemoryStatus = Mock(OsMemoryStatus)
 
     @Subject manager = new WorkerDaemonManager(clientsManager, memoryManager)
 
@@ -46,7 +46,7 @@ class WorkerDaemonManagerTest extends Specification {
 
     def "new client is created when daemon is executed and no idle clients found"() {
         when:
-        manager.getDaemon(serverImpl.class, workingDir, options).execute(worker, spec)
+        manager.getDaemon(serverImpl.class, workingDir, options).execute(worker, spec, operation())
 
         then:
         1 * clientsManager.reserveIdleClient(options) >> null
@@ -55,7 +55,7 @@ class WorkerDaemonManagerTest extends Specification {
         1 * clientsManager.reserveNewClient(serverImpl.class, workingDir, options) >> client
 
         then:
-        1 * client.execute(worker, spec)
+        1 * client.execute(worker, spec, operation())
 
         then:
         1 * clientsManager.release(client)
@@ -64,13 +64,13 @@ class WorkerDaemonManagerTest extends Specification {
 
     def "idle client is reused when daemon is executed"() {
         when:
-        manager.getDaemon(serverImpl.class, workingDir, options).execute(worker, spec)
+        manager.getDaemon(serverImpl.class, workingDir, options).execute(worker, spec, operation())
 
         then:
         1 * clientsManager.reserveIdleClient(options) >> client
 
         then:
-        1 * client.execute(worker, spec)
+        1 * client.execute(worker, spec, operation())
 
         then:
         1 * clientsManager.release(client)
@@ -79,13 +79,13 @@ class WorkerDaemonManagerTest extends Specification {
 
     def "client is released even if execution fails"() {
         when:
-        manager.getDaemon(serverImpl.class, workingDir, options).execute(worker, spec)
+        manager.getDaemon(serverImpl.class, workingDir, options).execute(worker, spec, operation())
 
         then:
         1 * clientsManager.reserveIdleClient(options) >> client
 
         then:
-        1 * client.execute(worker, spec) >> { throw new RuntimeException("Boo!") }
+        1 * client.execute(worker, spec, operation()) >> { throw new RuntimeException("Boo!") }
 
         then:
         thrown(RuntimeException)
@@ -115,5 +115,11 @@ class WorkerDaemonManagerTest extends Specification {
 
         then:
         clientsManager.stop()
+    }
+
+    Operation operation() {
+        def operation = Mock(Operation)
+        def completion = Mock(Completion)
+        _ * operation.operationStart() >> completion
     }
 }

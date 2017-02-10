@@ -17,6 +17,7 @@
 package org.gradle.api.internal.tasks.scala;
 
 import org.gradle.api.file.FileCollection;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.process.internal.daemon.WorkerDaemonFactory;
 import org.gradle.language.base.internal.compile.Compiler;
 import org.gradle.language.base.internal.compile.CompilerFactory;
@@ -30,15 +31,17 @@ public class ScalaCompilerFactory implements CompilerFactory<ScalaJavaJointCompi
     private FileCollection zincClasspath;
     private final File rootProjectDirectory;
     private final File gradleUserHomeDir;
+    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry;
 
     public ScalaCompilerFactory(
         File rootProjectDirectory, WorkerDaemonFactory compilerDaemonFactory, FileCollection scalaClasspath,
-        FileCollection zincClasspath, File gradleUserHomeDir) {
+        FileCollection zincClasspath, File gradleUserHomeDir, BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
         this.rootProjectDirectory = rootProjectDirectory;
         this.compilerDaemonFactory = compilerDaemonFactory;
         this.scalaClasspath = scalaClasspath;
         this.zincClasspath = zincClasspath;
         this.gradleUserHomeDir = gradleUserHomeDir;
+        this.buildOperationWorkerRegistry = buildOperationWorkerRegistry;
     }
 
     public Compiler<ScalaJavaJointCompileSpec> newCompiler(ScalaJavaJointCompileSpec spec) {
@@ -48,7 +51,7 @@ public class ScalaCompilerFactory implements CompilerFactory<ScalaJavaJointCompi
         // currently, we leave it to ZincScalaCompiler to also compile the Java code
         Compiler<ScalaJavaJointCompileSpec> scalaCompiler = new DaemonScalaCompiler<ScalaJavaJointCompileSpec>(
             rootProjectDirectory, new ZincScalaCompiler(scalaClasspathFiles, zincClasspathFiles, gradleUserHomeDir),
-            compilerDaemonFactory, zincClasspathFiles);
+            compilerDaemonFactory, zincClasspathFiles, buildOperationWorkerRegistry);
         return new NormalizingScalaCompiler(scalaCompiler);
     }
 }

@@ -18,13 +18,16 @@ package org.gradle.process.internal;
 
 import org.gradle.StartParameter;
 import org.gradle.api.internal.file.FileResolver;
+import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.internal.service.ServiceRegistration;
 import org.gradle.internal.service.scopes.PluginServiceRegistry;
-import org.gradle.process.daemon.WorkerDaemonService;
-import org.gradle.process.internal.daemon.DefaultWorkerDaemonService;
+import org.gradle.process.daemon.WorkerDaemonExecutor;
+import org.gradle.process.internal.daemon.DefaultWorkerDaemonExecutor;
 import org.gradle.process.internal.daemon.WorkerDaemonClientsManager;
+import org.gradle.process.internal.daemon.WorkerDaemonFactory;
 import org.gradle.process.internal.daemon.WorkerDaemonManager;
+import org.gradle.process.internal.daemon.WorkerDaemonServer;
 import org.gradle.process.internal.daemon.WorkerDaemonStarter;
 import org.gradle.process.internal.health.memory.MemoryManager;
 import org.gradle.process.internal.worker.WorkerProcessFactory;
@@ -52,18 +55,17 @@ public class WorkersServices implements PluginServiceRegistry {
     }
 
     private static class BuildSessionScopeServices {
-        WorkerDaemonClientsManager createWorkerDaemonClientsManager(BuildOperationWorkerRegistry buildOperationWorkerRegistry,
-                                                                    WorkerProcessFactory workerFactory,
+        WorkerDaemonClientsManager createWorkerDaemonClientsManager(WorkerProcessFactory workerFactory,
                                                                     StartParameter startParameter) {
-            return new WorkerDaemonClientsManager(new WorkerDaemonStarter(buildOperationWorkerRegistry, workerFactory, startParameter));
+            return new WorkerDaemonClientsManager(new WorkerDaemonStarter(workerFactory, startParameter));
         }
 
         WorkerDaemonManager createWorkerDaemonManager(WorkerDaemonClientsManager workerDaemonClientsManager, MemoryManager memoryManager) {
             return new WorkerDaemonManager(workerDaemonClientsManager, memoryManager);
         }
 
-        WorkerDaemonService createWorkerDaemonService(WorkerDaemonManager workerDaemonManager, FileResolver fileResolver) {
-            return new DefaultWorkerDaemonService(workerDaemonManager, fileResolver);
+        WorkerDaemonExecutor createWorkerDaemonExecutor(WorkerDaemonFactory workerDaemonFactory, FileResolver fileResolver, ExecutorFactory executorFactory, BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
+            return new DefaultWorkerDaemonExecutor(workerDaemonFactory, fileResolver, WorkerDaemonServer.class, executorFactory, buildOperationWorkerRegistry);
         }
     }
 }

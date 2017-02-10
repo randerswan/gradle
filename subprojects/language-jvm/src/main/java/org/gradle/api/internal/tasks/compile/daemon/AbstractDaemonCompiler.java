@@ -17,6 +17,7 @@ package org.gradle.api.internal.tasks.compile.daemon;
 
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.internal.UncheckedException;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.language.base.internal.compile.CompileSpec;
 import org.gradle.language.base.internal.compile.Compiler;
 import org.gradle.process.internal.daemon.DaemonForkOptions;
@@ -33,11 +34,13 @@ public abstract class AbstractDaemonCompiler<T extends CompileSpec> implements C
     private final Compiler<T> delegate;
     private final WorkerDaemonFactory compilerDaemonFactory;
     private final File daemonWorkingDir;
+    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry;
 
-    public AbstractDaemonCompiler(File daemonWorkingDir, Compiler<T> delegate, WorkerDaemonFactory compilerDaemonFactory) {
+    public AbstractDaemonCompiler(File daemonWorkingDir, Compiler<T> delegate, WorkerDaemonFactory compilerDaemonFactory, BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
         this.daemonWorkingDir = daemonWorkingDir;
         this.delegate = delegate;
         this.compilerDaemonFactory = compilerDaemonFactory;
+        this.buildOperationWorkerRegistry = buildOperationWorkerRegistry;
     }
 
     public Compiler<T> getDelegate() {
@@ -48,7 +51,7 @@ public abstract class AbstractDaemonCompiler<T extends CompileSpec> implements C
     public WorkResult execute(T spec) {
         DaemonForkOptions daemonForkOptions = toDaemonOptions(spec);
         WorkerDaemon daemon = compilerDaemonFactory.getDaemon(CompilerDaemonServer.class, daemonWorkingDir, daemonForkOptions);
-        WorkerDaemonResult result = daemon.execute(adapter(delegate), spec);
+        WorkerDaemonResult result = daemon.execute(adapter(delegate), spec, buildOperationWorkerRegistry.getCurrent());
         if (result.isSuccess()) {
             return result;
         }

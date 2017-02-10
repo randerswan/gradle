@@ -122,7 +122,9 @@ public class DefaultBuildOperationWorkerRegistry implements BuildOperationWorker
         private final LeaseHolder parent;
         private final int workerId;
         private final Thread ownerThread;
+        private final Object childrenFinished = new Object();
         int children;
+
 
         DefaultOperation(LeaseHolder parent, int workerId, Thread ownerThread) {
             this.parent = parent;
@@ -150,6 +152,12 @@ public class DefaultBuildOperationWorkerRegistry implements BuildOperationWorker
             if (children > 0) {
                 root.releaseLease();
             }
+
+            if (children == 0) {
+                synchronized (childrenFinished) {
+                    childrenFinished.notifyAll();
+                }
+            }
         }
 
         @Override
@@ -175,6 +183,20 @@ public class DefaultBuildOperationWorkerRegistry implements BuildOperationWorker
                 if (children != 0) {
                     throw new IllegalStateException("Some child operations have not yet completed.");
                 }
+            }
+        }
+
+        @Override
+        public void waitAndFinish() {
+            synchronized (childrenFinished) {
+                if (children > 0) {
+                    try {
+                        childrenFinished.wait();
+                    } catch (InterruptedException e) {
+                        throw UncheckedException.throwAsUncheckedException(e);
+                    }
+                }
+                operationFinish();
             }
         }
     }

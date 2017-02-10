@@ -16,12 +16,12 @@
 
 package org.gradle.process.daemon;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.gradle.api.Action;
 import org.gradle.api.Incubating;
-import org.gradle.process.JavaForkOptions;
 
-import java.io.File;
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.concurrent.Future;
 
 /**
  * Worker Daemon Executor.
@@ -31,41 +31,20 @@ import java.io.Serializable;
 @Incubating
 public interface WorkerDaemonExecutor {
     /**
-     * Adds a set of files to the classpath associated with the daemon process.
+     * Submits a piece of work to be executed.  Execution of the work may begin immediately.
+     * Forked work will execute in an idle daemon that meets the requirements set on this builder.  If no
+     * idle daemons are available, a new daemon will be started.  Any errors will be thrown from the returned {@link Future} or from {@link #await(Collection)}.
      *
-     * @param files - the files to add to the classpath
-     * @return this builder
+     * In the event that an error is thrown while submitting work, all uncompleted work will be canceled.
+     *
+     * @return a {@link Future} representing the completion of this piece of work.
      */
-    WorkerDaemonExecutor classpath(Iterable<File> files);
+    Future<?> submit(Class<? extends Runnable> actionClass, Action<WorkerDaemonConfiguration> configAction);
 
     /**
-     * Executes the provided action against the {@link JavaForkOptions} object associated with this builder.
-     *
-     * @param forkOptionsAction - An action to configure the {@link JavaForkOptions} for this builder
-     * @return this builder
-     */
-    WorkerDaemonExecutor forkOptions(Action<? super JavaForkOptions> forkOptionsAction);
-
-    /**
-     * Returns the {@link JavaForkOptions} object associated with this builder.
-     *
-     * @return the {@link JavaForkOptions} of this builder
-     */
-    JavaForkOptions getForkOptions();
-
-    /**
-     * Sets any initialization parameters to use when constructing an instance of the implementation class.
-     *
-     * @param params - the parameters to use during construction
-     * @return this builder
-     */
-    WorkerDaemonExecutor params(Serializable... params);
-
-    /**
-     * Synchronously executes the work in a daemon process.  Each call will execute in an idle daemon that meets the requirements set on this builder.  If no
-     * idle daemons are available, a new daemon will be started.
+     * Blocks until the specified work is complete.
      *
      * @throws WorkerDaemonExecutionException when a failure occurs while executing the work.
      */
-    void execute() throws WorkerDaemonExecutionException;
+    void await(Collection<ListenableFuture<?>> results) throws WorkerDaemonExecutionException;
 }

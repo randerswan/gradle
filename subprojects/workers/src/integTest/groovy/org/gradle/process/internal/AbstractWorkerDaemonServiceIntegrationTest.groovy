@@ -54,7 +54,7 @@ class AbstractWorkerDaemonServiceIntegrationTest extends AbstractIntegrationSpec
 
         return """
             import javax.inject.Inject
-            import org.gradle.process.daemon.WorkerDaemonService
+            import org.gradle.process.daemon.WorkerDaemonExecutor
             import org.gradle.other.Foo
 
             @ParallelizableTask
@@ -67,17 +67,17 @@ class AbstractWorkerDaemonServiceIntegrationTest extends AbstractIntegrationSpec
                 def foo = new Foo()
 
                 @Inject
-                WorkerDaemonService getWorkerDaemons() {
+                WorkerDaemonExecutor getWorkerExecutor() {
                     throw new UnsupportedOperationException()
                 }
 
                 @TaskAction
                 void executeTask() {
-                    workerDaemons.daemonRunnable(runnableClass)
-                        .forkOptions(additionalForkOptions)
-                        .classpath(additionalClasspath)
-                        .params(list.collect { it as String }, new File(outputFileDirPath), foo)
-                        .execute()
+                    workerExecutor.submit(runnableClass) { config ->
+                        config.forkOptions(additionalForkOptions)
+                        config.classpath(additionalClasspath)
+                        config.params = [ list.collect { it as String }, new File(outputFileDirPath), foo ]
+                    }.get()
                 }
             }
         """

@@ -18,7 +18,6 @@ package org.gradle.process.internal.daemon;
 import org.gradle.StartParameter;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.internal.time.Timer;
 import org.gradle.internal.time.Timers;
 import org.gradle.process.internal.JavaExecHandleBuilder;
@@ -30,12 +29,10 @@ import java.io.File;
 
 public class WorkerDaemonStarter {
     private final static Logger LOG = Logging.getLogger(WorkerDaemonStarter.class);
-    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry;
     private final WorkerProcessFactory workerFactory;
     private final StartParameter startParameter;
 
-    public WorkerDaemonStarter(BuildOperationWorkerRegistry buildOperationWorkerRegistry, WorkerProcessFactory workerFactory, StartParameter startParameter) {
-        this.buildOperationWorkerRegistry = buildOperationWorkerRegistry;
+    public WorkerDaemonStarter(WorkerProcessFactory workerFactory, StartParameter startParameter) {
         this.workerFactory = workerFactory;
         this.startParameter = startParameter;
     }
@@ -56,7 +53,7 @@ public class WorkerDaemonStarter {
         WorkerDaemonWorker worker = builder.build();
         WorkerProcess workerProcess = worker.start();
 
-        WorkerDaemonClient client = new WorkerDaemonClient(buildOperationWorkerRegistry, forkOptions, worker, workerProcess);
+        WorkerDaemonClient client = new WorkerDaemonClient(forkOptions, worker, workerProcess);
 
         LOG.info("Started Gradle worker daemon ({}) with fork options {}.", clock.getElapsed(), forkOptions);
 

@@ -26,6 +26,9 @@ import org.gradle.api.tasks.StopActionException
 import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.TaskExecutionException
 import org.gradle.groovy.scripts.ScriptSource
+import org.gradle.internal.operations.BuildOperationWorkerRegistry
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Operation
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Completion
 import org.gradle.logging.StandardOutputCapture
 import spock.lang.Specification
 
@@ -41,7 +44,10 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
     private final StandardOutputCapture standardOutputCapture = Mock(StandardOutputCapture)
     private final TaskActionListener publicListener = Mock(TaskActionListener)
     private final TaskOutputsGenerationListener internalListener = Mock(TaskOutputsGenerationListener)
-    private final ExecuteActionsTaskExecuter executer = new ExecuteActionsTaskExecuter(internalListener, publicListener)
+    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry = Mock(BuildOperationWorkerRegistry)
+    private final ExecuteActionsTaskExecuter executer = new ExecuteActionsTaskExecuter(internalListener, publicListener, buildOperationWorkerRegistry)
+    private final Operation operation = Mock(Operation)
+    private final Completion completion = Mock(Completion)
 
     def setup() {
         ProjectInternal project = Mock(ProjectInternal)
@@ -97,11 +103,17 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action1.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action1.execute(task) >> {
             assert state.executing
         }
         then:
         1 * action1.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:
@@ -109,9 +121,15 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action2.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action2.execute(task)
         then:
         1 * action2.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:
@@ -144,11 +162,17 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action1.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action1.execute(task) >> {
             task.getActions().add(action2)
         }
         then:
         1 * action1.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:
@@ -176,7 +200,13 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action1.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action1.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:
@@ -209,11 +239,17 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action1.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action1.execute(task) >> {
             throw new StopExecutionException('stop')
         }
         then:
         1 * action1.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:
@@ -241,11 +277,17 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action1.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action1.execute(task) >> {
             throw new StopActionException('stop')
         }
         then:
         1 * action1.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:
@@ -253,9 +295,15 @@ public class ExecuteActionsTaskExecuterTest extends Specification {
         then:
         1 * action2.contextualise(executionContext)
         then:
+        1 * buildOperationWorkerRegistry.getCurrent() >> operation
+        then:
+        1 * operation.operationStart() >> completion
+        then:
         1 * action2.execute(task)
         then:
         1 * action2.contextualise(null)
+        then:
+        1 * completion.waitAndFinish()
         then:
         1 * standardOutputCapture.stop()
         then:

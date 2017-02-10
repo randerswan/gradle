@@ -18,6 +18,7 @@ package org.gradle.api.internal.tasks.compile;
 
 import org.gradle.api.internal.ClassPathRegistry;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.process.internal.daemon.WorkerDaemonFactory;
 import org.gradle.process.internal.daemon.WorkerDaemonManager;
 import org.gradle.api.internal.tasks.compile.daemon.DaemonGroovyCompiler;
@@ -31,13 +32,15 @@ public class GroovyCompilerFactory implements CompilerFactory<GroovyJavaJointCom
     private final JavaCompilerFactory javaCompilerFactory;
     private final WorkerDaemonManager compilerDaemonFactory;
     private final InProcessCompilerDaemonFactory inProcessCompilerDaemonFactory;
+    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry;
 
     public GroovyCompilerFactory(ProjectInternal project, JavaCompilerFactory javaCompilerFactory, WorkerDaemonManager compilerDaemonManager,
-                                 InProcessCompilerDaemonFactory inProcessCompilerDaemonFactory) {
+                                 InProcessCompilerDaemonFactory inProcessCompilerDaemonFactory, BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
         this.project = project;
         this.javaCompilerFactory = javaCompilerFactory;
         this.compilerDaemonFactory = compilerDaemonManager;
         this.inProcessCompilerDaemonFactory = inProcessCompilerDaemonFactory;
+        this.buildOperationWorkerRegistry = buildOperationWorkerRegistry;
     }
 
     @Override
@@ -51,7 +54,7 @@ public class GroovyCompilerFactory implements CompilerFactory<GroovyJavaJointCom
         } else {
             daemonFactory = inProcessCompilerDaemonFactory;
         }
-        groovyCompiler = new DaemonGroovyCompiler(project.getRootProject().getProjectDir(), groovyCompiler, project.getServices().get(ClassPathRegistry.class), daemonFactory);
+        groovyCompiler = new DaemonGroovyCompiler(project.getRootProject().getProjectDir(), groovyCompiler, project.getServices().get(ClassPathRegistry.class), daemonFactory, buildOperationWorkerRegistry);
         return new NormalizingGroovyCompiler(groovyCompiler);
     }
 }

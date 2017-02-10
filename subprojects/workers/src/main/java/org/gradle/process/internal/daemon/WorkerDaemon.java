@@ -15,9 +15,11 @@
  */
 package org.gradle.process.internal.daemon;
 
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Operation;
+
 /**
  * A service that executes work in a (potentially) long-lived process.
  */
 public interface WorkerDaemon {
-    <T extends WorkSpec> WorkerDaemonResult execute(WorkerDaemonAction<T> action, T spec);
+    <T extends WorkSpec> WorkerDaemonResult execute(WorkerDaemonAction<T> action, T spec, Operation parentOperation);
 }

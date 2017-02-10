@@ -28,6 +28,8 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.StopActionException;
 import org.gradle.api.tasks.StopExecutionException;
 import org.gradle.api.tasks.TaskExecutionException;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Completion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +41,12 @@ public class ExecuteActionsTaskExecuter implements TaskExecuter {
     private static final Logger LOGGER = Logging.getLogger(ExecuteActionsTaskExecuter.class);
     private final TaskOutputsGenerationListener outputsGenerationListener;
     private final TaskActionListener listener;
+    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry;
 
-    public ExecuteActionsTaskExecuter(TaskOutputsGenerationListener outputsGenerationListener, TaskActionListener taskActionListener) {
+    public ExecuteActionsTaskExecuter(TaskOutputsGenerationListener outputsGenerationListener, TaskActionListener taskActionListener, BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
         this.outputsGenerationListener = outputsGenerationListener;
         this.listener = taskActionListener;
+        this.buildOperationWorkerRegistry = buildOperationWorkerRegistry;
     }
 
     public void execute(TaskInternal task, TaskStateInternal state, TaskExecutionContext context) {
@@ -91,10 +95,12 @@ public class ExecuteActionsTaskExecuter implements TaskExecuter {
 
     private void executeAction(TaskInternal task, ContextAwareTaskAction action, TaskExecutionContext context) {
         action.contextualise(context);
+        Completion taskActionOperation = buildOperationWorkerRegistry.getCurrent().operationStart();
         try {
             action.execute(task);
         } finally {
             action.contextualise(null);
+            taskActionOperation.waitAndFinish();
         }
     }
 }

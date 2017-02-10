@@ -38,6 +38,7 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.WorkResult;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.language.base.internal.compile.Compiler;
 import org.gradle.process.internal.daemon.WorkerDaemonManager;
 import org.gradle.util.GFileUtils;
@@ -70,7 +71,8 @@ public class GroovyCompile extends AbstractCompile {
             WorkerDaemonManager compilerDaemonManager = getServices().get(WorkerDaemonManager.class);
             InProcessCompilerDaemonFactory inProcessCompilerDaemonFactory = getServices().get(InProcessCompilerDaemonFactory.class);
             JavaCompilerFactory javaCompilerFactory = getServices().get(JavaCompilerFactory.class);
-            GroovyCompilerFactory groovyCompilerFactory = new GroovyCompilerFactory(projectInternal, javaCompilerFactory, compilerDaemonManager, inProcessCompilerDaemonFactory);
+            BuildOperationWorkerRegistry buildOperationWorkerRegistry = getServices().get(BuildOperationWorkerRegistry.class);
+            GroovyCompilerFactory groovyCompilerFactory = new GroovyCompilerFactory(projectInternal, javaCompilerFactory, compilerDaemonManager, inProcessCompilerDaemonFactory, buildOperationWorkerRegistry);
             Compiler<GroovyJavaJointCompileSpec> delegatingCompiler = groovyCompilerFactory.newCompiler(spec);
             compiler = new CleaningGroovyCompiler(delegatingCompiler, getOutputs());
         }

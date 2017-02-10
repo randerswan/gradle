@@ -190,10 +190,11 @@ class WorkerDaemonServiceIntegrationTest extends AbstractWorkerDaemonServiceInte
                         @Override
                         public void run() {
                             try {
-                                workerDaemons.daemonRunnable(runnableClass)
-                                    .forkOptions(additionalForkOptions)
-                                    .params(list.collect { it as String }, new File(outputFileDirPath), new Foo())
-                                    .execute()
+                                workerExecutor.submit(runnableClass) { config ->
+                                    config.forkOptions(additionalForkOptions)
+                                    config.classpath(additionalClasspath)
+                                    config.params = [ list.collect { it as String }, new File(outputFileDirPath), foo ]
+                                }.get()
                             } catch(Exception ex) {
                                 thrown = ex
                             }

@@ -17,6 +17,7 @@ package org.gradle.process.internal.daemon;
 
 import net.jcip.annotations.ThreadSafe;
 import org.gradle.internal.concurrent.Stoppable;
+import org.gradle.internal.operations.BuildOperationWorkerRegistry.Operation;
 import org.gradle.process.internal.health.memory.MemoryManager;
 import org.gradle.process.internal.health.memory.TotalPhysicalMemoryProvider;
 
@@ -41,13 +42,13 @@ public class WorkerDaemonManager implements WorkerDaemonFactory, Stoppable {
     @Override
     public WorkerDaemon getDaemon(final Class<? extends WorkerDaemonProtocol> serverImplementationClass, final File workingDir, final DaemonForkOptions forkOptions) {
         return new WorkerDaemon() {
-            public <T extends WorkSpec> WorkerDaemonResult execute(WorkerDaemonAction<T> action, T spec) {
+            public <T extends WorkSpec> WorkerDaemonResult execute(WorkerDaemonAction<T> action, T spec, Operation parentOperation) {
                 WorkerDaemonClient client = clientsManager.reserveIdleClient(forkOptions);
                 if (client == null) {
                     client = clientsManager.reserveNewClient(serverImplementationClass, workingDir, forkOptions);
                 }
                 try {
-                    return client.execute(action, spec);
+                    return client.execute(action, spec, parentOperation);
                 } finally {
                     clientsManager.release(client);
                 }

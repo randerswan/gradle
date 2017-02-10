@@ -15,6 +15,7 @@
  */
 package org.gradle.api.internal.tasks.compile;
 
+import org.gradle.internal.operations.BuildOperationWorkerRegistry;
 import org.gradle.process.internal.daemon.WorkerDaemonFactory;
 import org.gradle.internal.Factory;
 import org.gradle.language.base.internal.compile.CompileSpec;
@@ -27,11 +28,13 @@ public class DefaultJavaCompilerFactory implements JavaCompilerFactory {
     private final File daemonWorkingDir;
     private final WorkerDaemonFactory compilerDaemonFactory;
     private final Factory<JavaCompiler> javaHomeBasedJavaCompilerFactory;
+    private final BuildOperationWorkerRegistry buildOperationWorkerRegistry;
 
-    public DefaultJavaCompilerFactory(File daemonWorkingDir, WorkerDaemonFactory compilerDaemonFactory, Factory<JavaCompiler> javaHomeBasedJavaCompilerFactory) {
+    public DefaultJavaCompilerFactory(File daemonWorkingDir, WorkerDaemonFactory compilerDaemonFactory, Factory<JavaCompiler> javaHomeBasedJavaCompilerFactory, BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
         this.daemonWorkingDir = daemonWorkingDir;
         this.compilerDaemonFactory = compilerDaemonFactory;
         this.javaHomeBasedJavaCompilerFactory = javaHomeBasedJavaCompilerFactory;
+        this.buildOperationWorkerRegistry = buildOperationWorkerRegistry;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class DefaultJavaCompilerFactory implements JavaCompilerFactory {
 
         Compiler<JavaCompileSpec> compiler = new JdkJavaCompiler(javaHomeBasedJavaCompilerFactory);
         if (ForkingJavaCompileSpec.class.isAssignableFrom(type) && !jointCompilation) {
-            return new DaemonJavaCompiler(daemonWorkingDir, compiler, compilerDaemonFactory);
+            return new DaemonJavaCompiler(daemonWorkingDir, compiler, compilerDaemonFactory, buildOperationWorkerRegistry);
         }
 
         return compiler;

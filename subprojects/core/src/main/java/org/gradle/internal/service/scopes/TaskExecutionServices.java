@@ -114,7 +114,8 @@ public class TaskExecutionServices {
                                     StartParameter startParameter,
                                     ListenerManager listenerManager,
                                     GradleInternal gradle,
-                                    TaskOutputOriginFactory taskOutputOriginFactory) {
+                                    TaskOutputOriginFactory taskOutputOriginFactory,
+                                    BuildOperationWorkerRegistry buildOperationWorkerRegistry) {
         // TODO - need a more comprehensible way to only collect inputs for the outer build
         //      - we are trying to ignore buildSrc here, but also avoid weirdness with use of GradleBuild tasks
         boolean isOuterBuild = gradle.getParent() == null;
@@ -127,7 +128,8 @@ public class TaskExecutionServices {
 
         TaskExecuter executer = new ExecuteActionsTaskExecuter(
             taskOutputsGenerationListener,
-            listenerManager.getBroadcaster(TaskActionListener.class)
+            listenerManager.getBroadcaster(TaskActionListener.class),
+            buildOperationWorkerRegistry
         );
         boolean verifyInputsEnabled = Boolean.getBoolean("org.gradle.tasks.verifyinputs");
         if (verifyInputsEnabled) {

@@ -15,6 +15,7 @@
  */
 package org.gradle.api.internal.tasks.compile
 
+import org.gradle.internal.operations.BuildOperationWorkerRegistry
 import org.gradle.process.internal.daemon.WorkerDaemonFactory
 import org.gradle.internal.Factory
 import spock.lang.Specification
@@ -23,7 +24,7 @@ import javax.tools.JavaCompiler
 
 class DefaultJavaCompilerFactoryTest extends Specification {
     Factory<JavaCompiler> javaCompilerFinder = Mock()
-    def factory = new DefaultJavaCompilerFactory(new File("daemon-work-dir"), Mock(WorkerDaemonFactory), javaCompilerFinder)
+    def factory = new DefaultJavaCompilerFactory(new File("daemon-work-dir"), Mock(WorkerDaemonFactory), javaCompilerFinder, Mock(BuildOperationWorkerRegistry))
 
     def "creates in-process compiler when JavaCompileSpec is provided"() {
         expect:

@@ -16,9 +16,9 @@
 
 package org.gradle.process.daemon;
 
-import org.gradle.api.GradleException;
 import org.gradle.api.Incubating;
 import org.gradle.internal.exceptions.Contextual;
+import org.gradle.internal.exceptions.DefaultMultiCauseException;
 
 /**
  * Indicates that a failure occurred during execution of work in a worker daemon.
@@ -26,12 +26,17 @@ import org.gradle.internal.exceptions.Contextual;
  * @since 3.3
  */
 @Contextual @Incubating
-public class WorkerDaemonExecutionException extends GradleException {
-    public WorkerDaemonExecutionException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
+public class WorkerDaemonExecutionException extends DefaultMultiCauseException {
     public WorkerDaemonExecutionException(String message) {
         super(message);
     }
+
+    public WorkerDaemonExecutionException(String message, Throwable... causes) {
+        super(message, causes);
+    }
+
+    public WorkerDaemonExecutionException(String message, Iterable<? extends Throwable> causes) {
+        super(message, causes);
+    }
+
 }

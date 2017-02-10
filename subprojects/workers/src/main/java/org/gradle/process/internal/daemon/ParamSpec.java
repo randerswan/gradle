@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.gradle.process.daemon;
+package org.gradle.process.internal.daemon;
 
-import org.gradle.api.Incubating;
+import java.io.Serializable;
 
 /**
- * Worker Daemon Service.
- *
- * @since 3.3
+ * Represents a {@link WorkSpec} that contains constructor parameters.
  */
-@Incubating
-public interface WorkerDaemonService {
-    /**
-     * Creates a {@link WorkerDaemonExecutor} for executing the given Runnable in a daemon process.
-     *
-     * @return A {@link WorkerDaemonExecutor} that builds a daemon Runnable.
-     */
-    WorkerDaemonExecutor daemonRunnable(Class<? extends Runnable> runnableClass);
+public class ParamSpec implements WorkSpec {
+    final Serializable[] params;
+
+    ParamSpec(Serializable[] params) {
+        this.params = params;
+    }
+
+    public Serializable[] getParams() {
+        return params;
+    }
 }

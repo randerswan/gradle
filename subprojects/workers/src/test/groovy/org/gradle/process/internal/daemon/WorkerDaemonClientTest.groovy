@@ -16,14 +16,19 @@
 
 package org.gradle.process.internal.daemon
 
-import org.gradle.internal.operations.BuildOperationWorkerRegistry
 import spock.lang.Specification
 
 import static org.gradle.internal.operations.BuildOperationWorkerRegistry.Completion
 import static org.gradle.internal.operations.BuildOperationWorkerRegistry.Operation
 
 class WorkerDaemonClientTest extends Specification {
+    Operation operation = Mock(Operation)
+    Completion completion = Mock(Completion)
     WorkerDaemonClient client
+
+    def setup() {
+        _ * operation.operationStart() >> completion
+    }
 
     def "underlying worker is executed when client is executed"() {
         def workerDaemonWorker = Mock(WorkerDaemonWorker)
@@ -32,7 +37,7 @@ class WorkerDaemonClientTest extends Specification {
         client = client(workerDaemonWorker)
 
         when:
-        client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec))
+        client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec), operation)
 
         then:
         1 * workerDaemonWorker.execute(_, _)
@@ -44,7 +49,7 @@ class WorkerDaemonClientTest extends Specification {
         assert client.uses == 0
 
         when:
-        5.times { client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec)) }
+        5.times { client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec), operation) }
 
         then:
         client.uses == 5
@@ -55,10 +60,10 @@ class WorkerDaemonClientTest extends Specification {
         def completion = Mock(Completion)
 
         given:
-        client = client(operation)
+        client = client()
 
         when:
-        client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec))
+        client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec), operation)
 
         then:
         1 * operation.operationStart() >> completion
@@ -71,10 +76,10 @@ class WorkerDaemonClientTest extends Specification {
         def workerDaemonWorker = Mock(WorkerDaemonWorker)
 
         given:
-        client = client(operation, workerDaemonWorker)
+        client = client(workerDaemonWorker)
 
         when:
-        client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec))
+        client.execute(Stub(WorkerDaemonAction), Stub(WorkSpec), operation)
 
         then:
         thrown(RuntimeException)
@@ -83,29 +88,13 @@ class WorkerDaemonClientTest extends Specification {
         1 * completion.operationFinish()
     }
 
-    Operation operation() {
-        Operation operation = Mock(Operation)
-        Completion completion = Mock(Completion)
-        _ * operation.operationStart() >> completion
-        return operation
-    }
-
     WorkerDaemonClient client() {
-        return client(operation(), Mock(WorkerDaemonWorker))
-    }
-
-    WorkerDaemonClient client(Operation operation) {
-        return client(operation, Mock(WorkerDaemonWorker))
+        return client(Mock(WorkerDaemonWorker))
     }
 
     WorkerDaemonClient client(WorkerDaemonWorker workerDaemonWorker) {
-        return client(operation(), workerDaemonWorker)
-    }
-
-    WorkerDaemonClient client(Operation operation, WorkerDaemonWorker workerDaemonWorker) {
-        def buildOperationWorkerRegistry = Mock(BuildOperationWorkerRegistry) { _ * getCurrent() >> operation }
         def daemonForkOptions = Mock(DaemonForkOptions)
         def workerProcess = workerDaemonWorker.start()
-        return new WorkerDaemonClient(buildOperationWorkerRegistry, daemonForkOptions, workerDaemonWorker, workerProcess)
+        return new WorkerDaemonClient(daemonForkOptions, workerDaemonWorker, workerProcess)
     }
 }
