@@ -17,6 +17,7 @@
 package org.gradle.performance.java
 
 import org.gradle.performance.AbstractCrossVersionPerformanceTest
+import org.gradle.test.fixtures.keystore.TestKeyStore
 import org.gradle.test.fixtures.server.http.HttpBuildCache
 import org.junit.Rule
 import spock.lang.Unroll
@@ -39,13 +40,60 @@ class HttpTaskOutputCacheJavaPerformanceTest extends AbstractCrossVersionPerform
          * Since every second build is a 'clean', we need more iterations
          * than usual to get reliable results.
          */
-        runner.runs = 6
-        runner.warmUpRuns = 4
+        runner.runs = 20
         runner.setupCleanupOnOddRounds()
 
         buildCache.start()
 
-        initScript << """                                
+        initScript << remoteCacheInitScript
+
+        when:
+        def result = runner.run()
+
+        then:
+        result.assertCurrentVersionHasNotRegressed()
+
+        where:
+        testProject      | tasks
+        'bigOldJava'     | ['assemble']
+        'largeWithJUnit' | ['build']
+    }
+
+    def "Builds '#testProject' calling #tasks with remote https cache"() {
+        given:
+        def keyStore = TestKeyStore.init(tmpDir.file('ssl-keystore'))
+        def initScript = tmpDir.file('httpCacheInit.gradle')
+        runner.testId = "cached ${tasks.join(' ')} $testProject project - remote https cache"
+        runner.testProject = testProject
+        runner.tasksToRun = tasks
+        runner.gradleOpts = ["-Xms768m", "-Xmx768m"]
+        runner.args = ['-Dorg.gradle.cache.tasks=true', '--parallel', "-I${initScript.absolutePath}"] + keyStore.serverAndClientCertArgs
+        /*
+         * Since every second build is a 'clean', we need more iterations
+         * than usual to get reliable results.
+         */
+        runner.runs = 20
+        runner.setupCleanupOnOddRounds()
+
+        keyStore.enableSslWithServerCert(buildCache)
+        buildCache.start()
+
+        initScript << remoteCacheInitScript
+
+        when:
+        def result = runner.run()
+
+        then:
+        result.assertCurrentVersionHasNotRegressed()
+
+        where:
+        testProject      | tasks
+        'bigOldJava'     | ['assemble']
+        'largeWithJUnit' | ['build']
+    }
+
+    private String getRemoteCacheInitScript() {
+        """                                
             if (GradleVersion.current() > GradleVersion.version('3.4')) {
                 settingsEvaluated { settings ->
                     def httpCacheClass = Class.forName('org.gradle.caching.http.HttpBuildCache')
@@ -64,15 +112,5 @@ class HttpTaskOutputCacheJavaPerformanceTest extends AbstractCrossVersionPerform
                 )
             }
         """.stripIndent()
-
-        when:
-        def result = runner.run()
-
-        then:
-        result.assertCurrentVersionHasNotRegressed()
-
-        where:
-        testProject  | tasks
-        'bigOldJava' | ['assemble']
     }
 }
