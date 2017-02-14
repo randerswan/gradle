@@ -28,17 +28,14 @@ public class ConsoleStub implements Console {
         return new StyledLabel() {
             @Override
             public void setText(List<Span> spans) {
-
             }
 
             @Override
             public void setText(Span... spans) {
-
             }
 
             @Override
             public void setText(String text) {
-
             }
         };
     }
@@ -51,17 +48,14 @@ public class ConsoleStub implements Console {
                 return new StyledLabel() {
                     @Override
                     public void setText(String text) {
-
                     }
 
                     @Override
                     public void setText(List<Span> spans) {
-                        // TODO(ew): testable impl
                     }
 
                     @Override
                     public void setText(Span... spans) {
-
                     }
                 };
             }
@@ -73,7 +67,6 @@ public class ConsoleStub implements Console {
 
             @Override
             public void setVisible(boolean isVisible) {
-
             }
         };
     }

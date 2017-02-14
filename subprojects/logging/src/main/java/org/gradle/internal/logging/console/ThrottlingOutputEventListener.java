@@ -16,10 +16,10 @@
 
 package org.gradle.internal.logging.console;
 
+import org.gradle.internal.logging.events.BatchOutputEventListener;
 import org.gradle.internal.logging.events.EndOutputEvent;
 import org.gradle.internal.logging.events.OutputEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
-import org.gradle.internal.logging.events.OutputEventQueueDrainedEvent;
 import org.gradle.internal.time.TimeProvider;
 
 import java.util.ArrayList;
@@ -31,8 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Queue output events to be forwarded and schedule flush when time passed or if end of build is signalled.
  */
-public class ThrottlingOutputEventListener implements OutputEventListener {
-    private static final OutputEventQueueDrainedEvent QUEUE_DRAINED_EVENT = new OutputEventQueueDrainedEvent();
+public class ThrottlingOutputEventListener extends BatchOutputEventListener {
     private final OutputEventListener listener;
 
     private final ScheduledExecutorService executor;
@@ -95,16 +94,7 @@ public class ThrottlingOutputEventListener implements OutputEventListener {
             return;
         }
 
-        // process all events then notify consumers that they've received all for now
-        for (OutputEvent event : queue) {
-            try {
-                listener.onOutput(event);
-            } catch (Exception e) {
-                throw new RuntimeException("Unable to process incoming event '" + event + "' (" + event.getClass().getSimpleName() + ")", e);
-            }
-        }
-        listener.onOutput(QUEUE_DRAINED_EVENT);
-
+        listener.onOutput(new ArrayList<OutputEvent>(queue));
         queue.clear();
         lastUpdate = now;
     }

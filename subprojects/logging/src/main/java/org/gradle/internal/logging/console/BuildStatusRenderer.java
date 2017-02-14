@@ -22,7 +22,6 @@ import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.events.ProgressCompleteEvent;
 import org.gradle.internal.logging.events.ProgressEvent;
 import org.gradle.internal.logging.events.ProgressStartEvent;
-import org.gradle.internal.logging.events.OutputEventQueueDrainedEvent;
 import org.gradle.internal.logging.text.Span;
 import org.gradle.internal.logging.text.Style;
 import org.gradle.internal.nativeintegration.console.ConsoleMetaData;
@@ -76,10 +75,17 @@ public class BuildStatusRenderer implements OutputEventListener {
             if (progressEvent.getOperationId().equals(rootOperationId)) {
                 buildProgressed(progressEvent);
             }
-        } else if (event instanceof OutputEventQueueDrainedEvent) {
-            renderNow();
         }
-        listener.onOutput(event);
+    }
+
+    @Override
+    public void onOutput(Iterable<OutputEvent> events) {
+        for (OutputEvent event : events) {
+            onOutput(event);
+        }
+
+        renderNow();
+        listener.onOutput(events);
     }
 
     private String trimToConsole(String str) {

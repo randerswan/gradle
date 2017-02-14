@@ -18,4 +18,5 @@ package org.gradle.internal.logging.events;
 
 public interface OutputEventListener {
     void onOutput(OutputEvent event);
+    void onOutput(Iterable<OutputEvent> events);
 }

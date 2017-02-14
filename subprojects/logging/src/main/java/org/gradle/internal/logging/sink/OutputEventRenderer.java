@@ -23,15 +23,16 @@ import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.internal.event.ListenerBroadcast;
 import org.gradle.internal.logging.config.LoggingRouter;
 import org.gradle.internal.logging.console.AnsiConsole;
-import org.gradle.internal.logging.console.ConsoleLayoutCalculator;
-import org.gradle.internal.logging.console.ThrottlingOutputEventListener;
-import org.gradle.internal.logging.console.WorkInProgressRenderer;
 import org.gradle.internal.logging.console.BuildStatusRenderer;
 import org.gradle.internal.logging.console.ColorMap;
 import org.gradle.internal.logging.console.Console;
-import org.gradle.internal.logging.console.DefaultWorkInProgressFormatter;
+import org.gradle.internal.logging.console.ConsoleLayoutCalculator;
 import org.gradle.internal.logging.console.DefaultColorMap;
+import org.gradle.internal.logging.console.DefaultWorkInProgressFormatter;
 import org.gradle.internal.logging.console.StyledTextOutputBackedRenderer;
+import org.gradle.internal.logging.console.ThrottlingOutputEventListener;
+import org.gradle.internal.logging.console.WorkInProgressRenderer;
+import org.gradle.internal.logging.events.BatchOutputEventListener;
 import org.gradle.internal.logging.events.EndOutputEvent;
 import org.gradle.internal.logging.events.LogLevelChangeEvent;
 import org.gradle.internal.logging.events.OutputEvent;
@@ -214,7 +215,7 @@ public class OutputEventRenderer implements OutputEventListener, LoggingRouter {
     }
 
     private OutputEventListener onError(final OutputEventListener listener) {
-        return new OutputEventListener() {
+        return new BatchOutputEventListener() {
             public void onOutput(OutputEvent event) {
                 if (event.getLogLevel() == LogLevel.ERROR || event.getLogLevel() == null) {
                     listener.onOutput(event);
@@ -224,7 +225,7 @@ public class OutputEventRenderer implements OutputEventListener, LoggingRouter {
     }
 
     private OutputEventListener onNonError(final OutputEventListener listener) {
-        return new OutputEventListener() {
+        return new BatchOutputEventListener() {
             public void onOutput(OutputEvent event) {
                 if (event.getLogLevel() != LogLevel.ERROR || event.getLogLevel() == null) {
                     listener.onOutput(event);
@@ -270,6 +271,7 @@ public class OutputEventRenderer implements OutputEventListener, LoggingRouter {
         onOutput(new LogLevelChangeEvent(logLevel));
     }
 
+    @Override
     public void onOutput(OutputEvent event) {
         synchronized (lock) {
             if (event.getLogLevel() != null && event.getLogLevel().compareTo(logLevel) < 0) {
@@ -284,6 +286,13 @@ public class OutputEventRenderer implements OutputEventListener, LoggingRouter {
                 this.logLevel = newLogLevel;
             }
             formatters.getSource().onOutput(event);
+        }
+    }
+
+    @Override
+    public void onOutput(Iterable<OutputEvent> events) {
+        for (OutputEvent event : events) {
+            onOutput(event);
         }
     }
 

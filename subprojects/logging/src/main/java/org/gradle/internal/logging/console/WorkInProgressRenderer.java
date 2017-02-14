@@ -23,7 +23,6 @@ import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.events.ProgressCompleteEvent;
 import org.gradle.internal.logging.events.ProgressEvent;
 import org.gradle.internal.logging.events.ProgressStartEvent;
-import org.gradle.internal.logging.events.OutputEventQueueDrainedEvent;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -72,10 +71,16 @@ public class WorkInProgressRenderer implements OutputEventListener {
             operations.progress(progressEvent.getStatus(), progressEvent.getOperationId());
         } else if (event instanceof EndOutputEvent) {
             progressArea.setVisible(false);
-        } else if (event instanceof OutputEventQueueDrainedEvent) {
-            renderNow();
         }
-        listener.onOutput(event);
+    }
+
+    @Override
+    public void onOutput(Iterable<OutputEvent> events) {
+        for (OutputEvent event : events) {
+            onOutput(event);
+        }
+        renderNow();
+        listener.onOutput(events);
     }
 
     private void attach(ProgressOperation operation) {

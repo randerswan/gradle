@@ -18,7 +18,6 @@ package org.gradle.internal.logging.console
 
 import org.gradle.internal.logging.OutputSpecification
 import org.gradle.internal.logging.events.OutputEventListener
-import org.gradle.internal.logging.events.OutputEventQueueDrainedEvent
 import org.gradle.internal.logging.text.Span
 import org.gradle.internal.logging.text.Style
 import org.gradle.internal.nativeintegration.console.ConsoleMetaData
@@ -37,7 +36,6 @@ class BuildStatusRendererTest extends OutputSpecification {
     def "label renders most recent status"() {
         when:
         buildStatusRenderer.onOutput(start(shortDescription: 'status'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * consoleMetaData.getCols() >> 80
@@ -47,7 +45,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress('progress'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText(_ as List)
@@ -55,7 +52,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText(_ as List)
@@ -74,7 +70,6 @@ class BuildStatusRendererTest extends OutputSpecification {
         buildStatusRenderer.onOutput(progress('progress1'))
         buildStatusRenderer.onOutput(progress('progress2'))
         buildStatusRenderer.onOutput(progress('progress3'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress3')
@@ -93,7 +88,6 @@ class BuildStatusRendererTest extends OutputSpecification {
         buildStatusRenderer.onOutput(progress('progress1'))
         buildStatusRenderer.onOutput(progress('progress2'))
         buildStatusRenderer.onOutput(complete('done'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         0 * statusLabel._
@@ -109,7 +103,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('')
@@ -126,7 +119,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress('progress'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress')
@@ -134,7 +126,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('')
@@ -151,7 +142,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress('progress'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress')
@@ -159,7 +149,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(start(status: 'status2'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress > status2')
@@ -167,7 +156,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress('progress2'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress > progress2')
@@ -175,7 +163,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress')
@@ -183,7 +170,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('')
@@ -194,7 +180,6 @@ class BuildStatusRendererTest extends OutputSpecification {
         when:
         buildStatusRenderer.onOutput(start(status: ''))
         buildStatusRenderer.onOutput(start(status: ''))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         2 * statusLabel.setText('')
@@ -202,7 +187,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress('progress'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress')
@@ -210,7 +194,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('')
@@ -218,7 +201,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('')
@@ -235,7 +217,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress('progress'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> progress')
@@ -243,7 +224,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(progress(''))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('> short')
@@ -251,7 +231,6 @@ class BuildStatusRendererTest extends OutputSpecification {
 
         when:
         buildStatusRenderer.onOutput(complete('complete'))
-        buildStatusRenderer.onOutput(new OutputEventQueueDrainedEvent())
 
         then:
         1 * statusLabel.setText('')

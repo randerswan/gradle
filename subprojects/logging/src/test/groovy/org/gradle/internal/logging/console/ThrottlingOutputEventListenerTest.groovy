@@ -17,33 +17,31 @@ package org.gradle.internal.logging.console
 
 import org.gradle.internal.logging.OutputSpecification
 import org.gradle.internal.logging.events.EndOutputEvent
+import org.gradle.internal.logging.events.OutputEvent
 import org.gradle.internal.logging.events.OutputEventListener
-import org.gradle.internal.logging.events.OutputEventQueueDrainedEvent
 import org.gradle.util.MockExecutor
 import org.gradle.util.MockTimeProvider
 import spock.lang.Subject
 
 class ThrottlingOutputEventListenerTest extends OutputSpecification {
     def listener = Mock(OutputEventListener)
-    def statusBar = Mock(Label)
     def timeProvider = new MockTimeProvider()
     def executor = new MockExecutor()
 
     @Subject renderer = new ThrottlingOutputEventListener(listener, 100, executor, timeProvider)
 
-    def forwardsEventsToListener() {
+    def "forwards events to listener"() {
         def event = event('message')
 
         when:
         renderer.onOutput(event)
 
         then:
-        1 * listener.onOutput(event)
-        1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
+        1 * listener.onOutput([event] as ArrayList<OutputEvent>)
         0 * _
     }
 
-    def queuesEventsReceivedSoonAfterFirstAndForwardsThemLater() {
+    def "queues events received soon after first and forwards in batch"() {
         def event1 = event('1')
         def event2 = event('2')
         def event3 = event('3')
@@ -55,17 +53,14 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         renderer.onOutput(event3)
 
         then:
-        1 * listener.onOutput(event1)
-        1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
+        1 * listener.onOutput([event1] as ArrayList<OutputEvent>)
         0 * _
 
         when:
         flush()
 
         then:
-        1 * listener.onOutput(event2)
-        1 * listener.onOutput(event3)
-        1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
+        1 * listener.onOutput([event2, event3] as ArrayList<OutputEvent>)
         0 * _
 
         when:
@@ -75,7 +70,7 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         0 * _
     }
 
-    def forwardsEventReceivedSomeTimeAfterFirst() {
+    def "forwards event received significantly after first"() {
         def event1 = event('1')
         def event2 = event('2')
         def event3 = event('3')
@@ -88,8 +83,7 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         renderer.onOutput(event2)
 
         then:
-        1 * listener.onOutput(event2)
-        1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
+        1 * listener.onOutput([event2] as ArrayList<OutputEvent>)
         0 * _
 
         when:
@@ -111,18 +105,14 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         renderer.onOutput(event3)
 
         then:
-        1 * listener.onOutput(event1)
-        1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
+        1 * listener.onOutput([event1] as ArrayList<OutputEvent>)
         0 * _
 
         when:
         renderer.onOutput(end)
 
         then:
-        1 * listener.onOutput(event2)
-        1 * listener.onOutput(event3)
-        1 * listener.onOutput(end)
-        1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
+        1 * listener.onOutput([event2, event3, end] as ArrayList<OutputEvent>)
         0 * _
     }
 

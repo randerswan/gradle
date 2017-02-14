@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.gradle.internal.logging.events;
 
-import org.gradle.api.Nullable;
-import org.gradle.api.logging.LogLevel;
-
-public class OutputEventQueueDrainedEvent extends OutputEvent {
-    @Nullable
-    @Override
-    public LogLevel getLogLevel() {
-        return null;
+public abstract class BatchOutputEventListener implements OutputEventListener {
+    public void onOutput(Iterable<OutputEvent> events) {
+        for (OutputEvent event : events) {
+            onOutput(event);
+        }
     }
 }
