@@ -187,15 +187,13 @@ public class OutputEventRenderer implements OutputEventListener, LoggingRouter {
     }
 
     public OutputEventRenderer addConsole(Console console, boolean stdout, boolean stderr, ConsoleMetaData consoleMetaData) {
-        // ThrottlingOutputEventListener => WorkInProgressRenderer(BuildSummaryFormatter, WorkInProgressFormatter) => ProgressLogEventGenerator
         final OutputEventListener consoleChain = new ThrottlingOutputEventListener(
              new BuildStatusRenderer(
                 new WorkInProgressRenderer(
                     new ProgressLogEventGenerator(
                         new StyledTextOutputBackedRenderer(console.getBuildOutputArea()), true),
                     console.getBuildProgressArea(), new DefaultWorkInProgressFormatter(consoleMetaData)),
-                console.getStatusBar(), consoleMetaData),
-            console,
+                console.getStatusBar(), console, consoleMetaData),
             new TrueTimeProvider());
         synchronized (lock) {
             if (stdout && stderr) {

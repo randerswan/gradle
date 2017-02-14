@@ -25,16 +25,11 @@ import spock.lang.Subject
 
 class ThrottlingOutputEventListenerTest extends OutputSpecification {
     def listener = Mock(OutputEventListener)
-    def console = Mock(Console)
     def statusBar = Mock(Label)
     def timeProvider = new MockTimeProvider()
     def executor = new MockExecutor()
 
-    @Subject renderer = new ThrottlingOutputEventListener(listener, console, 100, executor, timeProvider)
-
-    def setup() {
-        (0..1) * console.getStatusBar() >> statusBar
-    }
+    @Subject renderer = new ThrottlingOutputEventListener(listener, 100, executor, timeProvider)
 
     def forwardsEventsToListener() {
         def event = event('message')
@@ -45,7 +40,6 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         then:
         1 * listener.onOutput(event)
         1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
-        1 * console.flush()
         0 * _
     }
 
@@ -63,7 +57,6 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         then:
         1 * listener.onOutput(event1)
         1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
-        1 * console.flush()
         0 * _
 
         when:
@@ -73,7 +66,6 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         1 * listener.onOutput(event2)
         1 * listener.onOutput(event3)
         1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
-        1 * console.flush()
         0 * _
 
         when:
@@ -98,7 +90,6 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         then:
         1 * listener.onOutput(event2)
         1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
-        1 * console.flush()
         0 * _
 
         when:
@@ -122,7 +113,6 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         then:
         1 * listener.onOutput(event1)
         1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
-        1 * console.flush()
         0 * _
 
         when:
@@ -133,7 +123,6 @@ class ThrottlingOutputEventListenerTest extends OutputSpecification {
         1 * listener.onOutput(event3)
         1 * listener.onOutput(end)
         1 * listener.onOutput(_ as OutputEventQueueDrainedEvent)
-        1 * console.flush()
         0 * _
     }
 

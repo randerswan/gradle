@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 public class ThrottlingOutputEventListener implements OutputEventListener {
     private static final OutputEventQueueDrainedEvent QUEUE_DRAINED_EVENT = new OutputEventQueueDrainedEvent();
     private final OutputEventListener listener;
-    private final Console console;
 
     private final ScheduledExecutorService executor;
     private final TimeProvider timeProvider;
@@ -44,15 +43,13 @@ public class ThrottlingOutputEventListener implements OutputEventListener {
     private long lastUpdate;
     private final List<OutputEvent> queue = new ArrayList<OutputEvent>();
 
-    // TODO(EW): Move console ref downstream
-    public ThrottlingOutputEventListener(OutputEventListener listener, Console console, TimeProvider timeProvider) {
-        this(listener, console, Integer.getInteger("org.gradle.console.throttle", 85), Executors.newSingleThreadScheduledExecutor(), timeProvider);
+    public ThrottlingOutputEventListener(OutputEventListener listener, TimeProvider timeProvider) {
+        this(listener, Integer.getInteger("org.gradle.console.throttle", 85), Executors.newSingleThreadScheduledExecutor(), timeProvider);
     }
 
-    ThrottlingOutputEventListener(OutputEventListener listener, Console console, int throttleMs, ScheduledExecutorService executor, TimeProvider timeProvider) {
+    ThrottlingOutputEventListener(OutputEventListener listener, int throttleMs, ScheduledExecutorService executor, TimeProvider timeProvider) {
         this.throttleMs = throttleMs;
         this.listener = listener;
-        this.console = console;
         this.executor = executor;
         this.timeProvider = timeProvider;
     }
@@ -110,6 +107,5 @@ public class ThrottlingOutputEventListener implements OutputEventListener {
 
         queue.clear();
         lastUpdate = now;
-        console.flush();
     }
 }

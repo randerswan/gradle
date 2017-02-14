@@ -32,13 +32,15 @@ import java.util.Arrays;
 public class BuildStatusRenderer implements OutputEventListener {
     private final OutputEventListener listener;
     private final StyledLabel buildStatusLabel;
+    private final Console console;
     private final ConsoleMetaData consoleMetaData;
     private String currentBuildStatus;
     private OperationIdentifier rootOperationId;
 
-    public BuildStatusRenderer(OutputEventListener listener, StyledLabel buildStatusLabel, ConsoleMetaData consoleMetaData) {
+    public BuildStatusRenderer(OutputEventListener listener, StyledLabel buildStatusLabel, Console console, ConsoleMetaData consoleMetaData) {
         this.listener = listener;
         this.buildStatusLabel = buildStatusLabel;
+        this.console = console;
         this.consoleMetaData = consoleMetaData;
     }
 
@@ -92,5 +94,6 @@ public class BuildStatusRenderer implements OutputEventListener {
         if (currentBuildStatus != null) {
             buildStatusLabel.setText(Arrays.asList(new Span(Style.of(Style.Emphasis.BOLD), trimToConsole(currentBuildStatus))));
         }
+        console.flush();
     }
 }
