@@ -26,44 +26,8 @@ import org.gradle.performance.measure.MeasuredOperation
 public class MeasuredOperationList extends LinkedList<MeasuredOperation> {
     String name
 
-    DataSeries<DataAmount> getTotalMemoryUsed() {
-        return new DataSeries<DataAmount>(this.collect { it.totalMemoryUsed })
-    }
-
-    DataSeries<DataAmount> getTotalHeapUsage() {
-        return new DataSeries<DataAmount>(this.collect { it.totalHeapUsage })
-    }
-
-    DataSeries<DataAmount> getMaxHeapUsage() {
-        return new DataSeries<DataAmount>(this.collect { it.maxHeapUsage })
-    }
-
-    DataSeries<DataAmount> getMaxUncollectedHeap() {
-        return new DataSeries<DataAmount>(this.collect { it.maxUncollectedHeap })
-    }
-
-    DataSeries<DataAmount> getMaxCommittedHeap() {
-        return new DataSeries<DataAmount>(this.collect { it.maxCommittedHeap })
-    }
-
     DataSeries<Duration> getTotalTime() {
         return new DataSeries<Duration>(this.collect { it.totalTime })
-    }
-
-    DataSeries<Duration> getConfigurationTime() {
-        return new DataSeries<Duration>(this.collect { it.configurationTime })
-    }
-
-    DataSeries<Duration> getExecutionTime() {
-        return new DataSeries<Duration>(this.collect { it.executionTime })
-    }
-
-    DataSeries<Duration> getCompileTotalTime() {
-        return new DataSeries<Duration>(this.collect { it.compileTotalTime ?: Duration.millis(0) })
-    }
-
-    DataSeries<Duration> getGcTotalTime() {
-        return new DataSeries<Duration>(this.collect { it.gcTotalTime ?: Duration.millis(0) })
     }
 
     String getSpeedStats() {
